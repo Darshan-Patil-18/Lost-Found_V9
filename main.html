@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAL College Lost & Found System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .highlight { background-color: #fef08a; padding: 2px 4px; border-radius: 2px; }
+        .timer-warning { color: #ef4444; font-weight: bold; }
+        .success-animation { animation: bounce 0.6s ease-in-out; }
+        @keyframes bounce { 0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); } 40%, 43% { transform: translate3d(0,-30px,0); } 70% { transform: translate3d(0,-15px,0); } 90% { transform: translate3d(0,-4px,0); } }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Navigation Bar (Hidden initially) -->
+    <nav id="navbar" class="bg-white shadow-lg hidden">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col items-center py-4">
+                <div class="flex items-center justify-between w-full mb-4">
+    <!-- Logo on left -->
+    <a href="#" onclick="showPage('home'); return false;">
+        <img src="https://www.sal.edu.in/storage/site-data/logo-1.png" 
+             alt="SAL College Logo" 
+             class="hover:opacity-80 transition-opacity" length="110" width="110">
+    </a>
+    
+    <!-- Center title -->
+     <h1 class="text-5xl font-bold text-gray-800 mb-6">Lost & Found System</h1>
+    
+    <!-- Empty div for balance -->
+    <div class="w-10"></div>
+</div>
+                <div class="flex items-center space-x-6">
+                    <button onclick="showPage('home')" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </button>
+                    <button onclick="showPage('report-found')" class="text-gray-600 hover:text-green-600 hover:bg-green-50 px-3 py-2 rounded-lg transition-all">
+                        <i class="fas fa-plus-circle mr-2"></i>Report Found
+                    </button>
+                    <button onclick="showPage('report-lost')" class="text-gray-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-all">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Report Lost
+                    </button>
+                    <button onclick="showPage('search')" class="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleProfileMenu()" class="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all">
+                            <i class="fas fa-user-circle text-2xl"></i>
+                            <i class="fas fa-chevron-down ml-1"></i>
+                        </button>
+                        <div id="profileMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden z-50">
+                            <button onclick="showPage('profile')" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>My Profile
+                            </button>
+                            <button onclick="logout()" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Enrollment Verification Page -->
+        <div id="enrollment-page" class="fade-in">
+            <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-graduation-cap text-3xl text-blue-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to SAL College</h2>
+                    <p class="text-gray-600">Lost & Found System</p>
+                </div>
+
+               <form id="enrollmentForm" onsubmit="return verifyEnrollment(event)">
+                    <div class="mb-6">
+                        <label for="enrollmentId" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-id-card mr-2 text-blue-600"></i>Student Enrollment ID
+                        </label>
+                        <input type="text" id="enrollmentId" name="enrollmentId" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                               placeholder="Enter your enrollment ID">
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="studentName" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-blue-600"></i>Full Name
+                        </label>
+                        <input type="text" id="studentName" name="studentName" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                               placeholder="Enter your full name">
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="branch" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building mr-2 text-blue-600"></i>Branch
+                        </label>
+                        <input type="text" id="branch" name="branch" readonly
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 transition-all"
+                               placeholder="Branch will be auto-filled">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="college" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-university mr-2 text-blue-600"></i>College
+                            </label>
+                            <input type="text" id="college" name="college" readonly
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 transition-all"
+                                   placeholder="College will be auto-filled">
+                        </div>
+                        <div>
+                            <label for="semester" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Semester
+                            </label>
+                            <input type="text" id="semester" name="semester" readonly
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 transition-all"
+                                   placeholder="Semester will be auto-filled">
+                        </div>
+                    </div>
+
+                    <div id="verificationButtons" class="hidden space-y-3">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-yellow-800">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Please confirm if these details are correct:
+                            </p>
+                        </div>
+                        <button type="button" onclick="confirmDetails(true)" 
+                                class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                            <i class="fas fa-check mr-2"></i>Yes, these are my details
+                        </button>
+                        <button type="button" onclick="confirmDetails(false)" 
+                                class="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            <i class="fas fa-times mr-2"></i>No, contact HOD/Coordinator
+                        </button>
+                    </div>
+
+                    <button type="submit" id="verifyBtn"
+                            class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <i class="fas fa-check-circle mr-2"></i>Verify Enrollment
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-500">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Your information is secure and only used for verification
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Page -->
+        <div id="home-page" class="hidden fade-in">
+            <div class="text-center mb-12">
+               
+
+
+
+
+                <div class="max-w-4xl mx-auto mb-8">
+                    <p class="text-2xl text-blue-600 font-semibold mb-4">🌟 Connecting Hearts, Reuniting Belongings 🌟</p>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                        Welcome to our innovative Lost & Found platform - where every lost item finds its way home! 
+                        Our community-driven system transforms the frustration of losing something precious into hope and connection.
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-6 text-center mb-6">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+                            <i class="fas fa-heart text-2xl text-blue-600 mb-2"></i>
+                            <p class="font-semibold text-blue-800">Built with Care</p>
+                            <p class="text-sm text-blue-600">Every feature designed to help</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+                            <i class="fas fa-users text-2xl text-green-600 mb-2"></i>
+                            <p class="font-semibold text-green-800">Community Powered</p>
+                            <p class="text-sm text-green-600">Students helping students</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+                            <i class="fas fa-magic text-2xl text-purple-600 mb-2"></i>
+                            <p class="font-semibold text-purple-800">Simple & Effective</p>
+                            <p class="text-sm text-purple-600">Find what matters most</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="text-2xl font-bold text-blue-600" id="totalSubmissions">0</div>
+                        <div class="text-sm text-gray-600">Total Submissions</div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="text-2xl font-bold text-green-600" id="totalFound">0</div>
+                        <div class="text-sm text-gray-600">Found Items</div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="text-2xl font-bold text-red-600" id="totalLost">0</div>
+                        <div class="text-sm text-gray-600">Lost Items</div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="text-2xl font-bold text-purple-600" id="totalReturned">0</div>
+                        <div class="text-sm text-gray-600">Items Returned</div>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+                        <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-plus-circle text-2xl text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Found Something?</h3>
+                        <p class="text-gray-600 mb-6">Report items you've found around campus to help others locate their belongings.</p>
+                        <button onclick="showPage('report-found')" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                            Report Found Item
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+                        <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-exclamation-circle text-2xl text-red-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Lost Something?</h3>
+                        <p class="text-gray-600 mb-6">Report your lost items and get notified when someone finds them.</p>
+                        <button onclick="showPage('report-lost')" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                            Report Lost Item
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <button onclick="showPage('search')" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg">
+                        <i class="fas fa-search mr-2"></i>Search All Items
+                    </button>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Report Found Item Page -->
+        <div id="report-found-page" class="hidden fade-in">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-plus-circle text-2xl text-green-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Report Found Item</h2>
+                    <p class="text-gray-600">Help someone find their lost belongings</p>
+                </div>
+                   <form id="foundItemForm" onsubmit="submitFoundItem(event)">
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Item Category</label>
+            <select name="category" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                <option value="">Select Category</option>
+                <option value="Wallet">Wallet</option>
+                <option value="Keys">Keys</option>
+                <option value="ID Card">ID Card</option>
+                <option value="Books">Books</option>
+                <option value="Notes">Notes</option>
+                <option value="Earbuds/Headphones">Earbuds/Headphones</option>
+                <option value="Charger">Charger</option>
+                <option value="Water Bottle">Water Bottle</option>
+                <option value="Bag">Bag</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Mobile Phone">Mobile Phone</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+            <input type="text" name="itemName" required placeholder="e.g., iPhone, Wallet, Textbook"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+        <textarea name="description" rows="4" required placeholder="Describe the item in detail (color, brand, distinctive features, etc.)"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+    </div>
+
+    <!-- Add Image Upload Section -->
+    <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Item Image (Optional)</label>
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
+            <input type="file" id="foundItemImage" name="itemImage" accept="image/*" 
+                   class="hidden" onchange="previewImage(this, 'foundImagePreview')">
+            <div id="foundImagePreview" class="mb-4 hidden">
+                <img id="foundPreviewImg" class="max-h-48 mx-auto rounded-lg">
+                <button type="button" onclick="removeImage('foundItemImage', 'foundImagePreview')" 
+                        class="mt-2 text-red-600 hover:text-red-800 text-sm">
+                    <i class="fas fa-times mr-1"></i>Remove Image
+                </button>
+            </div>
+            <div id="foundImagePlaceholder">
+                <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+                <p class="text-gray-600 mb-2">Click to upload an image</p>
+                <p class="text-sm text-gray-500">Supports JPG, PNG, GIF (Max 5MB)</p>
+                <button type="button" onclick="document.getElementById('foundItemImage').click()" 
+                        class="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-upload mr-2"></i>Choose Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Location Found</label>
+            <input type="text" name="location" required placeholder="e.g., Library, Cafeteria, Parking Lot"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Date Found</label>
+            <input type="date" name="dateFound" required
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Your Contact Information</label>
+        <input type="text" name="contactInfo" required placeholder="Phone number or email"
+               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+    </div>
+
+    <button type="submit" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+        <i class="fas fa-check mr-2"></i>Submit Found Item Report
+    </button>
+</form>
+            </div>
+        </div>
+
+        <!-- Report Lost Item Page -->
+        <div id="report-lost-page" class="hidden fade-in">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exclamation-circle text-2xl text-red-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Report Lost Item</h2>
+                    <p class="text-gray-600">Let others know what you're looking for</p>
+                </div>
+
+                <form id="lostItemForm" onsubmit="submitLostItem(event)">
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Item Category</label>
+                            <select name="category" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                <option value="">Select Category</option>
+                                <option value="Wallet">Wallet</option>
+                                <option value="Keys">Keys</option>
+                                <option value="ID Card">ID Card</option>
+                                <option value="Books">Books</option>
+                                <option value="Notes">Notes</option>
+                                <option value="Earbuds/Headphones">Earbuds/Headphones</option>
+                                <option value="Charger">Charger</option>
+                                <option value="Water Bottle">Water Bottle</option>
+                                <option value="Bag">Bag</option>
+                                <option value="Laptop">Laptop</option>
+                                <option value="Mobile Phone">Mobile Phone</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+                            <input type="text" name="itemName" required placeholder="e.g., iPhone, Wallet, Textbook"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea name="description" rows="4" required placeholder="Describe the item in detail (color, brand, distinctive features, etc.)"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"></textarea>
+                    </div>
+                    <!-- Add this in the lost item form, after description textarea -->
+<div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Item Image (Optional)</label>
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-500 transition-colors">
+        <input type="file" id="lostItemImage" name="itemImage" accept="image/*" 
+               class="hidden" onchange="previewImage(this, 'lostImagePreview')">
+        <div id="lostImagePreview" class="mb-4 hidden">
+            <img id="lostPreviewImg" class="max-h-48 mx-auto rounded-lg">
+            <button type="button" onclick="removeImage('lostItemImage', 'lostImagePreview')" 
+                    class="mt-2 text-red-600 hover:text-red-800 text-sm">
+                <i class="fas fa-times mr-1"></i>Remove Image
+            </button>
+        </div>
+        <div id="lostImagePlaceholder">
+            <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+            <p class="text-gray-600 mb-2">Click to upload an image</p>
+            <p class="text-sm text-gray-500">Supports JPG, PNG, GIF (Max 5MB)</p>
+            <button type="button" onclick="document.getElementById('lostItemImage').click()" 
+                    class="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                <i class="fas fa-upload mr-2"></i>Choose Image
+            </button>
+        </div>
+    </div>
+</div>
+
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Last Seen Location</label>
+                            <input type="text" name="location" required placeholder="e.g., Library, Cafeteria, Parking Lot"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date Lost</label>
+                            <input type="date" name="dateLost" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Your Contact Information</label>
+                        <input type="text" name="contactInfo" required placeholder="Phone number or email"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <button type="submit" class="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                        <i class="fas fa-search mr-2"></i>Submit Lost Item Report
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search Page -->
+        <div id="search-page" class="hidden fade-in">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Search Items</h2>
+                    
+                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                        <input type="text" id="searchQuery" placeholder="Search by item name or description"
+                               class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                               oninput="searchItems()">
+                        <select id="searchCategory" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                onchange="searchItems()">
+                            <option value="">All Categories</option>
+                            <option value="Wallet">Wallet</option>
+                            <option value="Keys">Keys</option>
+                            <option value="ID Card">ID Card</option>
+                            <option value="Books">Books</option>
+                            <option value="Notes">Notes</option>
+                            <option value="Earbuds/Headphones">Earbuds/Headphones</option>
+                            <option value="Charger">Charger</option>
+                            <option value="Water Bottle">Water Bottle</option>
+                            <option value="Bag">Bag</option>
+                            <option value="Laptop">Laptop</option>
+                            <option value="Mobile Phone">Mobile Phone</option>
+                            <option value="Others">Others</option>
+                        </select>
+                        <select id="searchType" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                onchange="searchItems()">
+                            <option value="">Found & Lost Items</option>
+                            <option value="found">Found Items Only</option>
+                            <option value="lost">Lost Items Only</option>
+                        </select>
+                    </div>
+
+                    <button onclick="searchItems()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+
+                <div id="searchResults" class="grid md:grid-cols-2 gap-6">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="hidden fade-in">
+            <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-user text-3xl text-blue-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800" id="profileName">Student Profile</h2>
+                    <p class="text-gray-600" id="profileEnrollment">Enrollment ID: </p>
+                    <p class="text-gray-600" id="profileDepartment">Department: </p>
+                </div>
+
+                <div class="space-y-8">
+    <div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">My Reported Items</h3>
+        <div id="userItems" class="space-y-4">
+            <!-- User's items will be populated here -->
+        </div>
+    </div>
+    
+    <div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">History (Returned Items)</h3>
+        <div id="userHistory" class="space-y-4">
+            <!-- User's returned items history will be populated here -->
+        </div>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="mb-4">
+                <img src="https://www.sal.edu.in/storage/site-data/logo-1.png" 
+     alt="SAL College Logo" 
+     class="h-8 w-auto mx-auto mb-2">
+                <p class="text-lg font-semibold">Lost & Found System</p>
+                <p class="text-gray-400">Connecting Hearts, Reuniting Belongings</p>
+            </div>
+            <div class="border-t border-gray-700 pt-4">
+                <p class="text-gray-400">
+                    © 2025 All Rights Reserved to <span class="text-blue-400 font-semibold">Darshan Patil</span>
+                </p>
+                <p class="text-sm text-gray-500 mt-2">
+                    Developed with ❤️ for SAL College Community
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md mx-4 slide-up">
+            <div class="text-center">
+                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 success-animation">
+                    <i class="fas fa-check text-2xl text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Success!</h3>
+                <p id="successMessage" class="text-gray-600 mb-6">Your item has been reported successfully.</p>
+                <button onclick="closeSuccessModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+<script src="app.js"></script>
+<!-- Email Conflict Modal -->
+<div id="emailConflictModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md mx-4 slide-up">
+        <div class="text-center">
+            <div class="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Enrollment Already Registered</h3>
+            <p id="conflictMessage" class="text-gray-600 mb-4">
+                This enrollment ID is already associated with a different email account.
+            </p>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-left">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Please use the same email you used previously: 
+                    <strong id="existingEmail" class="break-all"></strong>
+                </p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeEmailConflictModal()" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Use Different Enrollment
+                </button>
+                <button onclick="redirectToLogin()" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    Login with Correct Email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<button type="button" onclick="testAutoFill()" class="mt-4 bg-gray-500 text-white py-2 px-4 rounded">
+    Test Auto-Fill
+</button>
+</body>
+</html>

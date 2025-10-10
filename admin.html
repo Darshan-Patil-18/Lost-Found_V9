@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SAL College Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
+            <p class="text-gray-600">Manage all users and items in the system</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Users Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-users mr-2 text-blue-600"></i>
+                    Registered Users
+                </h2>
+                <div id="usersList" class="space-y-4 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600">Loading users...</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="showPage('admin')" class="text-gray-600 hover:text-purple-600 hover:bg-purple-50 px-3 py-2 rounded-lg transition-all">
+    <i class="fas fa-shield-alt mr-2"></i>Admin
+</button>
+            <!-- Items Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-boxes mr-2 text-green-600"></i>
+                    All Items
+                </h2>
+                <div id="itemsList" class="space-y-4 max-h-96 overflow-y-auto">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600">Loading items...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <button onclick="window.location.href='main.html'" 
+                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Main App
+            </button>
+        </div>
+        <!-- Admin Page -->
+<div id="admin-page" class="hidden fade-in">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
+            <p class="text-gray-600">System overview and management</p>
+        </div>
+        <iframe src="admin.html" class="w-full h-screen border rounded-lg"></iframe>
+    </div>
+</div>
+    </div>
+
+    <script type="module">
+        import { getUsersFromFirestore, getAllItemsFromFirestore, cleanupOldItems } from './firebaseauth.js';
+        
+        async function loadAdminData() {
+            try {
+                // Load users
+                const users = await getUsersFromFirestore();
+                const usersList = document.getElementById('usersList');
+                
+                if (users.length === 0) {
+                    usersList.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">No users found</p>
+                        </div>
+                    `;
+                } else {
+                    usersList.innerHTML = users.map(user => `
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-semibold text-gray-800">${user.firstName} ${user.lastName || ''}</p>
+                                    <p class="text-sm text-gray-600">${user.email}</p>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        <i class="fas fa-id-card mr-1"></i>
+                                        ${user.enrollmentId || 'No enrollment set'}
+                                    </p>
+                                </div>
+                                <span class="px-2 py-1 text-xs rounded-full ${user.enrollmentId ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${user.enrollmentId ? 'Verified' : 'Pending'}
+                                </span>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                <i class="fas fa-calendar mr-1"></i>
+                                Joined: ${new Date(user.createdAt).toLocaleDateString()}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Load items
+                const items = await getAllItemsFromFirestore();
+                const itemsList = document.getElementById('itemsList');
+                
+                if (items.length === 0) {
+                    itemsList.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-inbox text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600">No items reported yet</p>
+                        </div>
+                    `;
+                } else {
+                    itemsList.innerHTML = items.map(item => `
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="px-2 py-1 text-xs rounded-full font-medium ${
+                                    item.type === 'found' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }">
+                                    ${item.type === 'found' ? 'Found' : 'Lost'}
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    ${new Date(item.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
+                            
+                            <h4 class="font-semibold text-gray-800">${item.name}</h4>
+                            <p class="text-sm text-gray-600 mb-2">${item.description}</p>
+                            
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div>
+                                    <i class="fas fa-user mr-1"></i>
+                                    ${item.reporter} (${item.reporterId})
+                                </div>
+                                <div>
+                                    <i class="fas fa-map-marker-alt mr-1"></i>
+                                    ${item.location}
+                                </div>
+                                ${item.imageBase64 ? `
+                                    <div>
+                                        <i class="fas fa-image mr-1"></i>
+                                        Has image
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                document.getElementById('usersList').innerHTML = `
+                    <div class="text-center py-8 text-red-600">
+                        <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                        <p>Error loading data</p>
+                    </div>
+                `;
+                document.getElementById('itemsList').innerHTML = `
+                    <div class="text-center py-8 text-red-600">
+                        <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                        <p>Error loading data</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load data when page opens
+        loadAdminData();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadAdminData, 30000);
+    </script>
+</body>
+</html>
