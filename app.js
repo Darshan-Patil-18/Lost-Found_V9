@@ -309,26 +309,61 @@ function previewImage(input, previewId) {
     const placeholder = document.getElementById(input.id.replace('Image', 'ImagePlaceholder'));
     
     if (file) {
-        if (file.size > 2 * 1024 * 1024) { // Increased to 2MB for better quality
-            alert('Image size must be less than 2MB for optimal performance');
-            input.value = '';
-            return;
-        }
-        
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = preview.querySelector('img');
-            img.src = e.target.result;
-            preview.classList.remove('hidden');
-            placeholder.classList.add('hidden');
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
             
-            // Store base64 data for saving to Firestore
-            input._base64Data = e.target.result;
-        }
+            img.onload = function() {
+                // Create canvas for compression
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set maximum dimensions (800x600 max)
+                let width = img.width;
+                let height = img.height;
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 600;
+                
+                // Calculate new dimensions while maintaining aspect ratio
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width = Math.round((width * MAX_HEIGHT) / height);
+                        height = MAX_HEIGHT;
+                    }
+                }
+                
+                // Set canvas dimensions
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw and compress image
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to compressed base64 (70% quality)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // Show preview
+                const previewImg = preview.querySelector('img');
+                previewImg.src = compressedBase64;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                
+                // Store compressed image (now it's small KB size)
+                input._base64Data = compressedBase64;
+                
+                console.log('Original size:', (file.size / 1024).toFixed(2), 'KB');
+                console.log('Compressed size:', (compressedBase64.length / 1024).toFixed(2), 'KB');
+            };
+        };
         reader.readAsDataURL(file);
     }
 }
-
 function removeImage(inputId, previewId) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
