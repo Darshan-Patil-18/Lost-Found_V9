@@ -1,3 +1,5 @@
+// DELETE all the existing import lines at the top of firebaseauth.js and REPLACE them with this block.
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
 import { 
     getAuth, 
@@ -6,23 +8,25 @@ import {
     GoogleAuthProvider,
     signInWithPopup,
     fetchSignInMethodsForEmail,
-    linkWithCredential,
-    EmailAuthProvider
+    linkWithCredential
 } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 import { 
     getFirestore, 
-    setDoc, 
-    doc, 
-    getDoc,
     collection, 
-    addDoc, 
+    doc, 
+    setDoc, 
+    getDoc, 
     getDocs, 
     updateDoc, 
-    deleteDoc,
+    deleteDoc, 
     query, 
-    orderBy,
-    where
+    orderBy, 
+    where,
+    addDoc
 } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+// End of new import block. The rest of your file stays the same.
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyDou7GDvqdibgfEdr53wgSSgd_QNaclhQc",
@@ -32,9 +36,17 @@ const firebaseConfig = {
     messagingSenderId: "123518611655",
     appId: "1:123518611655:web:4ad9cda0e3b62c575d0ee2"
 };
-
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { app, auth, db };
+
 const provider = new GoogleAuthProvider();
+provider.setCustomParameters({
+  prompt: "select_account"  // 🔥 Force Google to ask which account each time
+});
+
 
 function showMessage(message, divId) {
     const messageDiv = document.getElementById(divId);
@@ -193,72 +205,80 @@ if (signIn) {
     });
 }
 
+// REPLACE your existing handleGoogleSignIn function with this one
+
 function handleGoogleSignIn() {
     const auth = getAuth();
     const db = getFirestore();
 
+    // Create a new provider instance EACH TIME to force account selection
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        prompt: "select_account", // This is the key to forcing the popup
+    });
+
     signInWithPopup(auth, provider)
-    .then((result) => {
-        const user = result.user;
-        const userEmail = user.email;
-        
-        localStorage.setItem('loggedInUserId', user.uid);
-        localStorage.setItem('currentUserEmail', userEmail);
-        
-        const userDocRef = doc(db, "users", user.uid);
-        
-        getDoc(userDocRef)
-        .then((docSnap) => {
-            if (docSnap.exists()) {
-                const userData = {
-                    ...docSnap.data(),
-                    lastLogin: new Date().toISOString(),
-                    photoURL: user.photoURL,
-                    displayName: user.displayName
-                };
-                if (!userData.providers || !userData.providers.includes('google')) {
-                    userData.providers = userData.providers ? [...userData.providers, 'google'] : ['google'];
-                }
-                return setDoc(userDocRef, userData, { merge: true });
-            } else {
-                const userData = {
-                    email: userEmail,
-                    firstName: user.displayName ? user.displayName.split(' ')[0] : 'User',
-                    lastName: user.displayName ? user.displayName.split(' ').slice(1).join(' ') : '',
-                    photoURL: user.photoURL,
-                    displayName: user.displayName,
-                    providers: ['google'],
-                    createdAt: new Date().toISOString(),
-                    lastLogin: new Date().toISOString()
-                };
-                return setDoc(userDocRef, userData);
-            }
-        })
-        .then(() => {
-            showMessage('Google Sign In Successful!', 'signInMessage');
+        .then((result) => {
+            const user = result.user;
+            const userEmail = user.email;
             
-            setTimeout(() => {
-                window.location.href = 'main.html';
-            }, 1000);
+            localStorage.setItem('loggedInUserId', user.uid);
+            localStorage.setItem('currentUserEmail', userEmail);
+
+            const userDocRef = doc(db, "users", user.uid);
+            getDoc(userDocRef)
+                .then((docSnap) => {
+                    if (docSnap.exists()) {
+                        const userData = {
+                            ...docSnap.data(),
+                            lastLogin: new Date().toISOString(),
+                            photoURL: user.photoURL,
+                            displayName: user.displayName
+                        };
+                        if (!userData.providers || !userData.providers.includes('google')) {
+                            userData.providers = userData.providers ? [...userData.providers, 'google'] : ['google'];
+                        }
+                        return setDoc(userDocRef, userData, { merge: true });
+                    } else {
+                        const userData = {
+                            email: userEmail,
+                            firstName: user.displayName ? user.displayName.split(' ')[0] : 'User',
+                            lastName: user.displayName ? user.displayName.split(' ').slice(1).join(' ') : '',
+                            photoURL: user.photoURL,
+                            displayName: user.displayName,
+                            providers: ['google'],
+                            createdAt: new Date().toISOString(),
+                            lastLogin: new Date().toISOString()
+                        };
+                        return setDoc(userDocRef, userData);
+                    }
+                })
+                .then(() => {
+                    showMessage('Google Sign In Successful!', 'signInMessage');
+                    setTimeout(() => {
+                        window.location.href = 'main.html';
+                    }, 1000);
+                })
+                .catch((error) => {
+                    console.error("Error handling user data:", error);
+                    showMessage('Sign in successful but profile setup failed.', 'signInMessage');
+                });
         })
         .catch((error) => {
-            console.error("Error handling user data:", error);
-            showMessage('Sign in successful but profile setup failed.', 'signInMessage');
+            console.error('Google Sign In Error:', error);
+            const errorCode = error.code;
+            const errorEmail = error.customData?.email;
+
+            if (errorCode === 'auth/account-exists-with-different-credential') {
+                handleAccountLinking(error, errorEmail);
+            } else if (errorCode === 'auth/popup-closed-by-user') {
+                console.log('Popup closed by user');
+            } else {
+                showMessage('Google Sign In failed. Please try again.', 'signInMessage');
+            }
         });
-    })
-    .catch((error) => {
-        console.error('Google Sign In Error:', error);
-        const errorCode = error.code;
-        const errorEmail = error.customData?.email;
-        
-        if (errorCode === 'auth/account-exists-with-different-credential') {
-            handleAccountLinking(error, errorEmail);
-        } else if (errorCode === 'auth/popup-closed-by-user') {
-        } else {
-            showMessage('Google Sign In failed. Please try again.', 'signInMessage');
-        }
-    });
 }
+
 
 function handleAccountLinking(error, email) {
     const auth = getAuth();
@@ -331,32 +351,137 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Authentication system initialized');
 });
+// ADD THIS NEW FUNCTION TO firebaseauth.js (and delete the old one)
 
-// FIRESTORE FUNCTIONS FOR LOST & FOUND ITEMS
 export async function saveItemToFirestore(item) {
-    const db = getFirestore();
-    const itemsRef = collection(db, "lostFoundItems");
-    const docRef = await addDoc(itemsRef, {
-        ...item,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
-    });
-    return docRef.id;
+    try {
+        const db = getFirestore();
+        // Use addDoc to let Firestore automatically generate the unique ID
+        const itemsCollection = collection(db, "lostFoundItems");
+        const docRef = await addDoc(itemsCollection, {
+            ...item,
+            createdAt: new Date().toISOString(), // Add a server-side timestamp
+        });
+        console.log('Item saved with Firestore ID:', docRef.id);
+        return docRef.id; // Return the official, auto-generated ID
+    } catch (error) {
+        console.error('Firebase Error saving item:', error);
+        throw error; // Pass the error up to be handled by the UI
+    }
 }
+
 
 export async function getAllItemsFromFirestore() {
     const db = getFirestore();
     const itemsRef = collection(db, "lostFoundItems");
-    const q = query(itemsRef, orderBy("createdAt", "desc"));
+    const q = query(itemsRef, where("status", "==", "active"), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     
     const items = [];
     querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() });
+        items.push({ 
+            firestoreId: doc.id, // Store the Firestore-generated ID
+            ...doc.data() 
+        });
     });
     return items;
 }
 
+export async function getUserItemsFromFirestore(userId) {
+    const db = getFirestore();
+    const itemsRef = collection(db, "lostFoundItems");
+    
+    const q = query(
+        itemsRef, 
+        where("userId", "==", userId),
+        where("status", "in", ["active", "returned"]),
+        orderBy("createdAt", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const items = [];
+    querySnapshot.forEach((doc) => {
+        items.push({ 
+            firestoreId: doc.id, // Store the Firestore-generated ID
+            ...doc.data() 
+        });
+    });
+    
+    console.log(`📊 Found ${items.length} user items`);
+    return items;
+}
+
+export async function deleteItemFromFirestore(itemId) {
+    const db = getFirestore();
+    const itemRef = doc(db, "lostFoundItems", itemId);
+    await deleteDoc(itemRef);
+    console.log('✅ Item hard deleted from Firestore:', itemId);
+}
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+export async function markAsReturnedInFirestore(firestoreId, userEnrollment) {
+    try {
+        const db = getFirestore();
+        console.log('✅ Firestore: Marking item as returned:', firestoreId);
+        
+        const itemRef = doc(db, "lostFoundItems", firestoreId);
+        await updateDoc(itemRef, {
+            status: 'returned',
+            returnedDate: new Date().toISOString(),
+            markedReturnedBy: userEnrollment
+        });
+        
+        console.log('✅ Firestore: Item marked as returned successfully');
+        
+    } catch (error) {
+        console.error('❌ Firestore markAsReturned Error:', error);
+        throw error;
+    }
+}
+
+
+export async function softDeleteItemInFirestore(firestoreId) {
+    try {
+        const db = getFirestore();
+        console.log('🔥 FIRESTORE: Attempting to archive document:', firestoreId);
+        
+        const itemRef = doc(db, "lostFoundItems", firestoreId);
+        await updateDoc(itemRef, {
+            status: 'archived',
+            archivedAt: new Date().toISOString()
+        });
+        
+        console.log('✅ FIRESTORE: Item successfully archived');
+        
+    } catch (error) {
+        console.error('❌ FIRESTORE DELETE ERROR:', error);
+        throw error;
+    }
+}
+
+
+export async function cleanupOldItems() {
+    const db = getFirestore();
+    const itemsRef = collection(db, "lostFoundItems");
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 90); // 90 days ago
+
+    const q = query(itemsRef, where("status", "==", "returned"), where("returnedDate", "<", cutoffDate.toISOString()));
+    
+    const querySnapshot = await getDocs(q);
+    const deletePromises = [];
+    querySnapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
+    });
+    
+    await Promise.all(deletePromises);
+    if (deletePromises.length > 0) {
+        console.log(`✅ Cleaned up ${deletePromises.length} old history items.`);
+    }
+}
+
+// FIXED: This is the correct function to get ALL users for the admin dashboard
 export async function getUsersFromFirestore() {
     const db = getFirestore();
     const usersRef = collection(db, "users");
@@ -367,50 +492,4 @@ export async function getUsersFromFirestore() {
         users.push({ id: doc.id, ...doc.data() });
     });
     return users;
-}
-
-export async function deleteItemFromFirestore(itemId) {
-    const db = getFirestore();
-    const itemRef = doc(db, "lostFoundItems", itemId);
-    await deleteDoc(itemRef);
-}
-
-export async function markAsReturnedInFirestore(itemId, userEnrollment) {
-    const db = getFirestore();
-    const itemRef = doc(db, "lostFoundItems", itemId);
-    await updateDoc(itemRef, {
-        status: 'returned',
-        returnedDate: new Date().toISOString(),
-        markedReturnedBy: userEnrollment
-    });
-}
-
-export async function cleanupOldItems() {
-    const db = getFirestore();
-    const itemsRef = collection(db, "lostFoundItems");
-    const cutoffDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    const q = query(itemsRef, where("createdAt", "<", cutoffDate.toISOString()));
-    const querySnapshot = await getDocs(q);
-    
-    const deletePromises = [];
-    querySnapshot.forEach((doc) => {
-        deletePromises.push(deleteDoc(doc.ref));
-    });
-    
-    await Promise.all(deletePromises);
-    console.log(`Cleaned up ${deletePromises.length} old items`);
-}
-// ADD these functions to firebaseauth.js (after existing functions)
-
-export async function getUserItemsFromFirestore(userId) {
-    const db = getFirestore();
-    const itemsRef = collection(db, "lostFoundItems");
-    const q = query(itemsRef, where("userId", "==", userId));
-    const querySnapshot = await getDocs(q);
-    
-    const items = [];
-    querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() });
-    });
-    return items;
 }
